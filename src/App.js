@@ -363,7 +363,7 @@ const App = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2, duration: 0.8 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-white/10"
+          className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-france-blue/30"
         >
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16 space-x-8">
@@ -849,11 +849,11 @@ const App = () => {
             <div className="text-center mb-8">
               <motion.div
                 animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="inline-block mb-6 p-4 bg-white rounded-none"
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                className="inline-block mb-6 p-4 bg-yellow-400 rounded-none"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="black" viewBox="0 0 24 24">
-                  <path d="M12 3v10.55c-.59-.34-1.27-.55-2-0.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4v2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8h4z"/>
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                 </svg>
               </motion.div>
               <h1 className="text-4xl font-black text-white mb-4 tracking-wider">

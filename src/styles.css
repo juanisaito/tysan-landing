@@ -30,13 +30,16 @@
   /* Albert Sans (Clean) */
   --font-albert-sans: 'Albert Sans', sans-serif;
   
-  /* Colores */
-  --color-primary: #000000;
-  --color-secondary: #ffffff;
-  --color-accent: #1a1a1a;
+  /* Colores - Paleta Tysan */
+  --color-primary: #000000; /* Negro */
+  --color-secondary: #ffffff; /* Blanco */
+  --color-accent: #1a1a1a; /* Gris oscuro */
+  --color-france-blue: #002395; /* Azul Francia */
+  --color-france-blue-light: #0052cc; /* Azul Francia claro */
   --color-gray-300: #d1d5db;
   --color-gray-400: #9ca3af;
   --color-gray-500: #6b7280;
+  --color-yellow: #fbbf24; /* Amarillo para la copa */
   
   /* Espaciado */
   --spacing-xs: 0.25rem;
@@ -349,6 +352,31 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Clases para la paleta Tysan */
+.bg-france-blue {
+  background-color: var(--color-france-blue);
+}
+
+.bg-france-blue-light {
+  background-color: var(--color-france-blue-light);
+}
+
+.text-france-blue {
+  color: var(--color-france-blue);
+}
+
+.text-france-blue-light {
+  color: var(--color-france-blue-light);
+}
+
+.border-france-blue {
+  border-color: var(--color-france-blue);
+}
+
+.border-france-blue-light {
+  border-color: var(--color-france-blue-light);
 }
 
 /* Modo oscuro (por si acaso) */
