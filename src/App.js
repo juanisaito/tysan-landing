@@ -182,11 +182,11 @@ const App = () => {
         scrollToSection(nextSection);
       }
       
-      // Debounce wheel events
+      // Faster debounce for better responsiveness
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         isScrollingWheel = false;
-      }, 300);
+      }, 200);
     };
 
     const handleKeyDown = (e) => {
@@ -222,15 +222,14 @@ const App = () => {
     };
   }, [currentSection, isScrolling, sections.length, scrollToSection, isUnlocked]);
 
-  // Memoized animation variants
+  // Optimized animation variants - reduced complexity
   const leftVariants = useMemo(() => ({
     initial: { x: 0 },
     animate: { 
       x: '-100%', 
       transition: { 
-        duration: 1.5, 
-        ease: [0.65, 0, 0.35, 1],
-        delay: 0.2
+        duration: 1.2, 
+        ease: "easeInOut"
       } 
     }
   }), []);
@@ -240,9 +239,8 @@ const App = () => {
     animate: { 
       x: '100%', 
       transition: { 
-        duration: 1.5, 
-        ease: [0.65, 0, 0.35, 1],
-        delay: 0.2
+        duration: 1.2, 
+        ease: "easeInOut"
       } 
     }
   }), []);
@@ -252,43 +250,40 @@ const App = () => {
     animate: { 
       scaleY: 0,
       transition: { 
-        duration: 1.5, 
-        ease: [0.65, 0, 0.35, 1],
-        delay: 0.2
+        duration: 1.2, 
+        ease: "easeInOut"
       } 
     }
   }), []);
 
-  // Section entrance variants
+  // Optimized section variants - faster transitions
   const sectionVariants = useMemo(() => ({
-    initial: { opacity: 0, x: 100 },
+    initial: { opacity: 0 },
     animate: { 
       opacity: 1, 
-      x: 0,
       transition: { 
-        duration: 0.3,
+        duration: 0.2,
         ease: "easeOut"
       }
     },
     exit: { 
       opacity: 0, 
-      x: -100,
       transition: { 
-        duration: 0.3,
+        duration: 0.2,
         ease: "easeIn"
       }
     }
   }), []);
 
-  // Stagger variants for content
+  // Optimized stagger variants - reduced delays
   const staggerVariants = useMemo(() => ({
-    initial: { opacity: 0, y: 20 },
+    initial: { opacity: 0, y: 10 },
     animate: (i) => ({
       opacity: 1,
       y: 0,
       transition: {
-        delay: i * 0.1,
-        duration: 0.3,
+        delay: i * 0.05,
+        duration: 0.2,
         ease: "easeOut"
       }
     })
@@ -342,14 +337,12 @@ const App = () => {
             loop
             muted
             playsInline
+            preload="metadata"
             className="w-full h-full object-cover opacity-95"
             style={{ filter: 'brightness(2.0) contrast(1.2) saturate(1.1)' }}
-            onLoadStart={() => console.log('🎬 Video cargando...')}
-            onCanPlay={() => console.log('✅ Video listo para reproducir')}
-            onError={(e) => console.error('❌ Error cargando video:', e)}
           >
-            <source src="/videos/tysan-background.mp4" type="video/mp4" />
             <source src="/videos/tysan-background.webm" type="video/webm" />
+            <source src="/videos/tysan-background.mp4" type="video/mp4" />
             {/* Fallback: Animated gradient background */}
             <div className="w-full h-full bg-gradient-to-br from-gray-900 via-black to-gray-800 animate-pulse" />
           </video>
@@ -460,7 +453,7 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 py-20 relative overflow-hidden"
+            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-24 pb-20 relative overflow-hidden"
           >
             {/* Section Background */}
             <motion.div
