@@ -413,34 +413,38 @@ const App = () => {
             </div>
           </div>
 
-          {/* Mobile Menu */}
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ 
-              opacity: isMenuOpen ? 1 : 0,
-              height: isMenuOpen ? 'auto' : 0
-            }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-black/95 backdrop-blur-md border-t border-white/10 overflow-hidden"
-          >
-            <div className="px-4 py-4 space-y-2">
-              {sections.map((section, index) => (
-                <motion.button
-                  key={section.id}
-                  onClick={() => scrollToSection(index)}
-                  whileHover={{ x: 10 }}
-                  className={`block w-full text-left py-3 px-4 text-sm font-medium transition-colors duration-300 ${
-                    currentSection === index 
-                      ? 'text-white bg-white/10' 
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  {section.title}
-                </motion.button>
-              ))}
-            </div>
-          </motion.div>
         </motion.header>
+
+        {/* Mobile Menu - Moved outside header to prevent overlap */}
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ 
+            opacity: isMenuOpen ? 1 : 0,
+            height: isMenuOpen ? 'auto' : 0
+          }}
+          transition={{ duration: 0.3 }}
+          className="md:hidden fixed top-16 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10 overflow-hidden"
+        >
+          <div className="px-4 py-4 space-y-2">
+            {sections.map((section, index) => (
+              <motion.button
+                key={section.id}
+                onClick={() => {
+                  scrollToSection(index);
+                  setIsMenuOpen(false);
+                }}
+                whileHover={{ x: 10 }}
+                className={`block w-full text-left py-3 px-4 text-sm font-medium transition-colors duration-300 ${
+                  currentSection === index 
+                    ? 'text-white bg-white/10' 
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                }`}
+              >
+                {section.title}
+              </motion.button>
+            ))}
+          </div>
+        </motion.div>
       )}
 
       {/* Content Sections - Fullpage on Desktop, Normal Scroll on Mobile */}
@@ -453,7 +457,7 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-32 pb-20 relative overflow-hidden"
+            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-20 md:pt-32 pb-20 relative overflow-hidden"
           >
             {/* Section Background */}
             <motion.div
