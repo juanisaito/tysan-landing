@@ -648,7 +648,7 @@ const App = () => {
                         <motion.button
                           whileHover={{ scale: 1.1 }}
                           whileTap={{ scale: 0.9 }}
-                          className="w-10 h-10 bg-white text-black rounded-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          className="w-10 h-10 bg-france-blue text-white rounded-none flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z"/>
@@ -680,10 +680,10 @@ const App = () => {
                           Una noche de jazz detroit en su máxima expresión.
                         </p>
                         <div className="flex flex-wrap justify-center gap-4">
-                          <button className="text-white hover:text-black hover:bg-white transition-all duration-300 px-6 py-2 border border-white font-medium">
+                          <button className="text-white hover:text-france-blue hover:bg-white transition-all duration-300 px-6 py-2 border border-white font-medium">
                              Comprar Tickets
                           </button>
-                          <button className="text-white hover:text-black hover:bg-white transition-all duration-300 px-6 py-2 border border-white font-medium">
+                          <button className="bg-france-blue text-white hover:bg-france-blue-light transition-all duration-300 px-6 py-2 border border-france-blue font-medium">
                              Más Info
                           </button>
                         </div>
@@ -896,9 +896,9 @@ const App = () => {
                 whileTap={{ scale: isLoading ? 1 : 0.98 }}
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-white text-black font-bold 
+                className="w-full bg-france-blue text-white font-bold 
                           py-4 px-6 transition-all duration-300 shadow-lg
-                          hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          hover:bg-france-blue-light disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? (
                   <div className="flex items-center justify-center gap-2">
