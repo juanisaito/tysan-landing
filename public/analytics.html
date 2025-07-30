@@ -1,0 +1,98 @@
+<!-- Google Analytics Configuration -->
+<!-- Reemplaza GA_MEASUREMENT_ID con tu ID de Google Analytics -->
+
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'GA_MEASUREMENT_ID', {
+    page_title: 'Tysan Landing Page',
+    custom_map: {
+      'custom_parameter_1': 'section_name',
+      'custom_parameter_2': 'button_name'
+    }
+  });
+
+  // Track page views
+  gtag('event', 'page_view', {
+    page_title: 'Tysan Landing Page',
+    page_location: window.location.href
+  });
+
+  // Track email submissions
+  function trackEmailSubmission(email) {
+    gtag('event', 'email_submission', {
+      event_category: 'engagement',
+      event_label: 'landing_page_unlock',
+      value: 1
+    });
+  }
+
+  // Track section views
+  function trackSectionView(sectionName) {
+    gtag('event', 'section_view', {
+      event_category: 'navigation',
+      event_label: sectionName,
+      custom_parameter_1: sectionName
+    });
+  }
+
+  // Track button clicks
+  function trackButtonClick(buttonName, sectionName) {
+    gtag('event', 'button_click', {
+      event_category: 'engagement',
+      event_label: buttonName,
+      custom_parameter_1: sectionName,
+      custom_parameter_2: buttonName
+    });
+  }
+
+  // Track music player interactions
+  function trackMusicInteraction(action) {
+    gtag('event', 'music_interaction', {
+      event_category: 'media',
+      event_label: action,
+      value: 1
+    });
+  }
+
+  // Make functions globally available
+  window.trackEmailSubmission = trackEmailSubmission;
+  window.trackSectionView = trackSectionView;
+  window.trackButtonClick = trackButtonClick;
+  window.trackMusicInteraction = trackMusicInteraction;
+</script>
+
+<!-- Facebook Pixel (Opcional) -->
+<!-- Reemplaza FB_PIXEL_ID con tu ID de Facebook Pixel -->
+<script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', 'FB_PIXEL_ID');
+  fbq('track', 'PageView');
+</script>
+<noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=FB_PIXEL_ID&ev=PageView&noscript=1"
+/></noscript>
+
+<!-- Hotjar (Opcional) -->
+<!-- Reemplaza HOTJAR_ID con tu ID de Hotjar -->
+<script>
+  (function(h,o,t,j,a,r){
+    h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+    h._hjSettings={hjid:HOTJAR_ID,hjsv:6};
+    a=o.getElementsByTagName('head')[0];
+    r=o.createElement('script');r.async=1;
+    r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+    a.appendChild(r);
+  })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+</script> 
