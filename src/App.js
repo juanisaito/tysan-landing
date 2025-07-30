@@ -457,7 +457,7 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-20 md:pt-32 pb-20 relative overflow-hidden"
+            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-28 md:pt-36 pb-20 relative overflow-hidden"
           >
             {/* Section Background */}
             <motion.div
