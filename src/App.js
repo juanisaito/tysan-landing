@@ -356,7 +356,7 @@ const App = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 2, duration: 0.8 }}
-          className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b border-france-blue/30"
+          className="fixed top-0 left-0 right-0 z-40 bg-black/80 backdrop-blur-md border-b border-france-blue/30"
         >
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16 space-x-8">
@@ -453,7 +453,7 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-24 pb-20 relative overflow-hidden"
+            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-32 pb-20 relative overflow-hidden"
           >
             {/* Section Background */}
             <motion.div
@@ -472,7 +472,7 @@ const App = () => {
               }}
             />
             
-            <div className="max-w-6xl mx-auto text-center z-20 px-4">
+            <div className="max-w-6xl mx-auto text-center z-30 px-4">
               <motion.h2
                 custom={0}
                 variants={staggerVariants}
