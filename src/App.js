@@ -457,7 +457,7 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-28 md:pt-36 pb-20 relative overflow-hidden"
+            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-32 md:pt-40 pb-20 relative overflow-hidden"
           >
             {/* Section Background */}
             <motion.div
@@ -476,7 +476,7 @@ const App = () => {
               }}
             />
             
-            <div className="max-w-6xl mx-auto text-center z-30 px-4">
+            <div className="max-w-6xl mx-auto text-center z-50 px-4">
               <motion.h2
                 custom={0}
                 variants={staggerVariants}
