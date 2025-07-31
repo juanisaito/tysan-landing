@@ -1,103 +1,52 @@
-// Configuración de la Landing Page de Tysan
-// Edita estos valores para personalizar el contenido
+// Configuration file for TYSAN Landing Page
+const APP_VERSION = '1.0.3'; // Incrementar versión para forzar actualizaciones
 
 export const config = {
-  // Información del Artista
-  artist: {
-    name: "TYSAN",
-    genre: "Jazz Detroit",
-    description: "Música que trasciende fronteras",
-    email: "liminalrecords.ar@gmail.com",
-    location: "Buenos Aires, Argentina"
-  },
-
-  // Redes Sociales (reemplaza los "#" con los enlaces reales)
-  socialMedia: {
-    instagram: "#",
-    tiktok: "#", 
-    youtube: "#",
-    spotify: "#"
-  },
-
-  // Próximo Lanzamiento
-  upcomingRelease: {
-    title: "Untitled",
-    releaseDate: "2025-02-15",
-    description: "El próximo lanzamiento de Tysan promete llevar el jazz detroit a nuevos horizontes.",
-    albumArt: "https://via.placeholder.com/300x300/4D4E6A/FFFFFF?text=UNTITLED",
-    previewUrl: "https://example.com/preview.mp3"
-  },
-
-  // Shows en Vivo
-  shows: [
-    {
-      date: "2025-02-15",
-      title: "Show #1",
-      description: "Una noche de jazz detroit en su máxima expresión.",
-      ticketUrl: "#",
-      infoUrl: "#"
-    },
-    {
-      date: "2025-03-20", 
-      title: "Show #2",
-      description: "Experiencia musical única en vivo.",
-      ticketUrl: "#",
-      infoUrl: "#"
-    }
-  ],
-
-  // Tracks de Música
-  tracks: [
-    {
-      title: "Track 1",
-      duration: "3:45",
-      genre: "Jazz Detroit"
-    },
-    {
-      title: "Track 2", 
-      duration: "4:12",
-      genre: "Jazz Detroit"
-    },
-    {
-      title: "Track 3",
-      duration: "3:28", 
-      genre: "Jazz Detroit"
-    },
-    {
-      title: "Track 4",
-      duration: "5:03",
-      genre: "Jazz Detroit"
-    }
-  ],
-
-  // Enlaces de Donación
-  donations: {
-    paypal: "https://www.paypal.com",
-    mercadopago: "https://www.mercadopago.com"
-  },
-
-  // Configuración de Mailchimp (reemplazar con datos reales)
-  mailchimp: {
-    apiKey: "YOUR_MAILCHIMP_API_KEY",
-    listId: "YOUR_MAILCHIMP_LIST_ID",
-    server: "YOUR_MAILCHIMP_SERVER" // ej: "us1"
-  },
-
-  // Configuración de Spotify API (opcional)
+  // App Version
+  version: APP_VERSION,
+  
+  // Spotify API Configuration
   spotify: {
-    clientId: "YOUR_SPOTIFY_CLIENT_ID",
-    clientSecret: "YOUR_SPOTIFY_CLIENT_SECRET"
+    clientId: process.env.REACT_APP_SPOTIFY_CLIENT_ID || '8655a44e54f5429990da4f90a8521eda',
+    clientSecret: process.env.REACT_APP_SPOTIFY_CLIENT_SECRET || '6f7169e1585e440a9ddb675dbb33ce0f',
+    baseUrl: 'https://api.spotify.com/v1',
+    authUrl: 'https://accounts.spotify.com/api/token'
   },
-
-  // Colores del tema
-  colors: {
-    primary: "#111339",
-    secondary: "#0E0F0E", 
-    accent: "#4D4E6A",
-    text: "#FFFFFF",
-    textSecondary: "#9CA3AF"
+  
+  // App Configuration
+  app: {
+    name: process.env.REACT_APP_ARTIST_NAME || 'TYSAN',
+    label: process.env.REACT_APP_LABEL_NAME || 'LIMINAL RECORDS',
+    region: process.env.REACT_APP_REGION || 'Patagonia Argentina',
+    version: APP_VERSION
+  },
+  
+  // Cache Configuration
+  cache: {
+    name: `tysan-cache-v${APP_VERSION.replace(/\./g, '-')}`,
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    staticCache: `tysan-static-v${APP_VERSION.replace(/\./g, '-')}`,
+    dynamicCache: `tysan-dynamic-v${APP_VERSION.replace(/\./g, '-')}`
+  },
+  
+  // Performance Configuration
+  performance: {
+    lazyLoadThreshold: 0.1,
+    imageQuality: 0.8,
+    videoPreload: 'metadata',
+    enableServiceWorker: true,
+    enableCache: true
+  },
+  
+  // Development Configuration
+  development: {
+    enableDebugLogs: process.env.NODE_ENV === 'development',
+    enableCacheClearing: process.env.NODE_ENV === 'development',
+    enableForceUpdate: process.env.NODE_ENV === 'development'
   }
 };
+
+export default config;
 
 // Función para formatear fechas
 export const formatDate = (dateString) => {
@@ -122,4 +71,41 @@ export const submitToMailchimp = async (email) => {
       resolve({ success: true });
     }, 1500);
   });
+};
+
+// Función para limpiar caché
+export const clearAppCache = async () => {
+  if ('caches' in window) {
+    try {
+      const cacheNames = await caches.keys();
+      await Promise.all(
+        cacheNames.map(cacheName => {
+          console.log('🗑️ Eliminando cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+      console.log('✅ Cache limpiado exitosamente');
+      return true;
+    } catch (error) {
+      console.error('❌ Error limpiando cache:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+// Función para forzar actualización
+export const forceAppUpdate = () => {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(registration => {
+        registration.unregister();
+        console.log('🔄 Service Worker desregistrado');
+      });
+      // Recargar página después de un breve delay
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    });
+  }
 }; 

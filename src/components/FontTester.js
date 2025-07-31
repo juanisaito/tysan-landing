@@ -11,7 +11,15 @@ const FontTester = ({ onFontChange }) => {
     { id: 'chivo', name: 'Chivo', class: 'font-chivo', description: 'Enlighted vibes' },
     { id: 'dm-sans', name: 'DM Sans', class: 'font-dm-sans', description: 'Bullbenny vibes' },
     { id: 'outfit', name: 'Outfit', class: 'font-outfit', description: 'Moderno' },
-    { id: 'albert-sans', name: 'Albert Sans', class: 'font-albert-sans', description: 'Clean' }
+    { id: 'albert-sans', name: 'Albert Sans', class: 'font-albert-sans', description: 'Clean' },
+    { id: 'poppins', name: 'Poppins', class: 'font-poppins', description: 'Elegante' },
+    { id: 'montserrat', name: 'Montserrat', class: 'font-montserrat', description: 'Clásico' },
+    { id: 'roboto', name: 'Roboto', class: 'font-roboto', description: 'Google vibes' },
+    { id: 'open-sans', name: 'Open Sans', class: 'font-open-sans', description: 'Legible' },
+    { id: 'lato', name: 'Lato', class: 'font-lato', description: 'Suave' },
+    { id: 'raleway', name: 'Raleway', class: 'font-raleway', description: 'Fino' },
+    { id: 'nunito', name: 'Nunito', class: 'font-nunito', description: 'Amigable' },
+    { id: 'quicksand', name: 'Quicksand', class: 'font-quicksand', description: 'Redondeado' }
   ];
 
   const handleFontChange = (fontId) => {
@@ -23,7 +31,7 @@ const FontTester = ({ onFontChange }) => {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="fixed top-20 left-4 z-50 bg-black/90 backdrop-blur-md border border-white/20 p-4 rounded-none max-w-xs"
+      className="fixed top-20 left-2 sm:left-4 z-50 bg-black/90 backdrop-blur-md border border-white/20 p-3 sm:p-4 rounded-none max-w-[280px] sm:max-w-xs max-h-80 sm:max-h-96 overflow-y-auto"
     >
       <h3 className="text-white font-bold mb-4 text-sm">TIPOGRAFÍAS</h3>
       <div className="space-y-3">

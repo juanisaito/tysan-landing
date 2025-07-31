@@ -19,8 +19,8 @@
 3. Abre `src/services/spotifyService.js`
 4. Reemplaza:
    ```javascript
-   const SPOTIFY_CLIENT_ID = 'TU_CLIENT_ID_AQUI';
-   const SPOTIFY_CLIENT_SECRET = 'TU_CLIENT_SECRET_AQUI';
+   const SPOTIFY_CLIENT_ID = '8655a44e54f5429990da4f90a8521eda';
+   const SPOTIFY_CLIENT_SECRET = '6f7169e1585e440a9ddb675dbb33ce0f';
    ```
 
 ### 3. Variables de Entorno (Recomendado)

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpiar Cache - TYSAN</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #000;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+            max-width: 400px;
+        }
+        .button {
+            background: #1db954;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #1ed760;
+        }
+        .button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        .status {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .success {
+            background: #1db954;
+        }
+        .error {
+            background: #e74c3c;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Cache Manager</h1>
+        <p>Herramientas para limpiar caché y forzar actualizaciones</p>
+        
+        <button class="button" onclick="clearCache()">🗑️ Limpiar Cache</button>
+        <button class="button" onclick="forceUpdate()">🔄 Forzar Actualización</button>
+        <button class="button" onclick="reloadPage()">📄 Recargar Página</button>
+        
+        <div id="status"></div>
+    </div>
+
+    <script>
+        async function clearCache() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Limpiando cache...';
+            statusDiv.className = 'status';
+            
+            try {
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(
+                        cacheNames.map(cacheName => caches.delete(cacheName))
+                    );
+                    statusDiv.innerHTML = '✅ Cache limpiado exitosamente';
+                    statusDiv.className = 'status success';
+                } else {
+                    throw new Error('Cache API no disponible');
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+                statusDiv.className = 'status error';
+            }
+        }
+
+        function forceUpdate() {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = 'Forzando actualización...';
+            statusDiv.className = 'status';
+            
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                    statusDiv.innerHTML = '✅ Service Worker desregistrado. Recargando...';
+                    statusDiv.className = 'status success';
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                });
+            } else {
+                statusDiv.innerHTML = '❌ Service Worker no disponible';
+                statusDiv.className = 'status error';
+            }
+        }
+
+        function reloadPage() {
+            window.location.reload();
+        }
+    </script>
+</body>
+</html> 

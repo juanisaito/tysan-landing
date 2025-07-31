@@ -17,8 +17,18 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "build:analyze": "GENERATE_SOURCEMAP=false react-scripts build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "build:prod": "GENERATE_SOURCEMAP=false react-scripts build",
+    "build:clean": "rm -rf build && npm run build:prod",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx",
+    "lint:fix": "eslint src --ext .js,.jsx --fix",
+    "format": "prettier --write src/**/*.{js,jsx,css,md}",
+    "performance": "lighthouse http://localhost:3000 --output=json --output-path=./lighthouse-report.json",
+    "cache:clear": "node scripts/clear-cache.js",
+    "deploy:prep": "npm run build:clean && npm run cache:clear",
+    "dev:clean": "npm run cache:clear && npm install && npm start"
   },
   "eslintConfig": {
     "extends": [

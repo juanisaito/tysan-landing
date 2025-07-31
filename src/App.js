@@ -1,8 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { motion, useScroll, useTransform, useAnimation, AnimatePresence } from 'framer-motion';
 import FontTester from './components/FontTester';
+import LazyImage from './components/LazyImage';
+import CacheManager from './components/CacheManager';
 import { useSpotifyData } from './hooks/useSpotifyData';
 import { testSpotifyConnection } from './utils/testSpotifyConnection';
+import { getTrackGradient } from './utils/colorAnalyzer';
 
 const App = () => {
   const [email, setEmail] = useState('');
@@ -14,10 +17,9 @@ const App = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
-  const [currentFont, setCurrentFont] = useState('inter');
+  const [currentFont, setCurrentFont] = useState('dm-sans');
   const [showFontTester, setShowFontTester] = useState(false);
   const [playingTrack, setPlayingTrack] = useState(null);
-  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   
   // Hook para datos automáticos de Spotify
@@ -84,8 +86,9 @@ const App = () => {
       setIsUnlocked(true);
       setEmail(savedEmail);
       
-      // Check if user is admin (SAITONEPROD)
-      if (savedEmail.toLowerCase().includes('saitoneprod') || savedEmail.toLowerCase().includes('liminal')) {
+      // Check if user is admin (emails específicos)
+      const adminEmails = ['juanisaito@gmail.com', 'saitoneprod@gmail.com', 'liminal@gmail.com'];
+      if (adminEmails.includes(savedEmail.toLowerCase())) {
         setIsAdmin(true);
       }
     }
@@ -124,29 +127,41 @@ const App = () => {
   // Optimized form submission with useCallback
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
-    if (/\S+@\S+\.\S+/.test(email)) {
-      setIsLoading(true);
-      
+    
+    // Validación de email más estricta
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailRegex.test(email)) {
+      setError('Por favor ingresa un correo válido');
+      return;
+    }
+    
+    // Prevenir spam - límite de longitud
+    if (email.length > 254) {
+      setError('El correo es demasiado largo');
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
       // Simulate email submission to Google Sheets
-      try {
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // Save email to localStorage
-        localStorage.setItem('tysan_unlocked_email', email);
-        
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Save email to localStorage with sanitization
+      const sanitizedEmail = email.toLowerCase().trim();
+      localStorage.setItem('tysan_unlocked_email', sanitizedEmail);
+      localStorage.setItem('tysan_unlock_date', new Date().toISOString());
+      
       setIsUnlocked(true);
       controls.start({
         opacity: 0,
         y: -50,
         transition: { duration: 0.8, ease: "easeInOut" }
       });
-      } catch (error) {
-        setError('Error al enviar el correo. Intenta nuevamente.');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setError('Por favor ingresa un correo válido');
+    } catch (error) {
+      setError('Error al enviar el correo. Intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
     }
   }, [email, controls]);
 
@@ -180,8 +195,6 @@ const App = () => {
     let timeoutId;
     let isScrollingWheel = false;
 
-
-
     const handleWheel = (e) => {
       // Enable fullpage scroll on all devices
       if (isScrollingWheel || isScrolling) return;
@@ -189,6 +202,7 @@ const App = () => {
       e.preventDefault();
       isScrollingWheel = true;
       
+      // Trackpad navigation - original direction
       const direction = e.deltaY > 0 ? 1 : -1;
       const nextSection = Math.max(0, Math.min(sections.length - 1, currentSection + direction));
       
@@ -522,24 +536,13 @@ const App = () => {
     })
   }), []);
 
-  // Simple animation getters - no complex caching needed
-  const getCachedTitleVariants = useCallback((sectionIndex) => {
-    return getTitleVariants(sectionIndex);
-  }, []);
 
-  const getCachedSubtitleVariants = useCallback((sectionIndex) => {
-    return getSubtitleVariants(sectionIndex);
-  }, []);
-
-  const getCachedContentVariants = useCallback((sectionIndex) => {
-    return getContentVariants(sectionIndex);
-  }, []);
 
   useEffect(() => {
     const handleResize = () => {
       if (isUnlocked) {
         // On mobile, allow normal scroll. On desktop, prevent scroll for fullpage
-        document.body.style.overflow = window.innerWidth <= 768 ? 'auto' : 'hidden';
+        document.body.style.overflow = window.innerWidth <= 1024 ? 'auto' : 'hidden';
       } else {
         document.body.style.overflow = 'hidden';
       }
@@ -576,11 +579,13 @@ const App = () => {
   // Handle track preview with real audio
   const handlePlayPreview = (trackId) => {
     const track = tracks.find(t => t.id === trackId);
+    console.log('Playing track:', track);
     
     if (playingTrack === trackId) {
       // Pause current track
       if (audioRef.current) {
         audioRef.current.pause();
+        console.log('Track paused');
       }
       setPlayingTrack(null);
     } else {
@@ -594,13 +599,33 @@ const App = () => {
       
       // Create audio element with Spotify preview URL
       if (track && track.previewUrl) {
+        console.log('Preview URL found:', track.previewUrl);
         if (audioRef.current) {
           audioRef.current.src = track.previewUrl;
-          audioRef.current.play().catch(e => {
-            console.log('Audio play failed:', e);
-            setPlayingTrack(null);
-          });
+          audioRef.current.volume = 0.7; // Set volume to 70%
+          audioRef.current.preload = 'auto';
+          
+          // Try to play with better error handling
+          const playPromise = audioRef.current.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                console.log('✅ Audio started playing successfully:', track.title);
+              })
+              .catch(e => {
+                console.error('❌ Audio play failed:', e);
+                console.log('Track title:', track.title);
+                console.log('Preview URL:', track.previewUrl);
+                // Simulate playing for visual feedback
+                console.log('Simulating play for visual feedback');
+              });
+          }
         }
+      } else {
+        // If no preview URL, simulate playing for visual feedback
+        console.log('⚠️ No preview URL available for:', track?.title);
+        console.log('Track data:', track);
       }
       
       // Auto-stop after 30 seconds
@@ -626,20 +651,28 @@ const App = () => {
       'chivo': 'font-chivo',
       'dm-sans': 'font-dm-sans',
       'outfit': 'font-outfit',
-      'albert-sans': 'font-albert-sans'
+      'albert-sans': 'font-albert-sans',
+      'poppins': 'font-poppins',
+      'montserrat': 'font-montserrat',
+      'roboto': 'font-roboto',
+      'open-sans': 'font-open-sans',
+      'lato': 'font-lato',
+      'raleway': 'font-raleway',
+      'nunito': 'font-nunito',
+      'quicksand': 'font-quicksand'
     };
-    return fontMap[currentFont] || 'font-inter';
+    return fontMap[currentFont] || 'font-dm-sans';
   };
 
   return (
-    <div ref={containerRef} className={`min-h-screen md:overflow-hidden transition-colors duration-500 ${getFontClass()} ${isDarkMode ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+    <div ref={containerRef} className={`min-h-screen md:overflow-hidden transition-colors duration-500 ${getFontClass()} bg-black text-white`}>
       
       {/* Hidden Audio Element */}
       <audio ref={audioRef} preload="none" />
       
       {/* Video Background - Estilo Tame Impala */}
       {isUnlocked && (
-        <div className="fixed inset-0 z-0">
+        <div className="fixed inset-0 z-0 overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
@@ -647,15 +680,26 @@ const App = () => {
             muted
             playsInline
             preload="metadata"
-            className="w-full h-full object-cover opacity-95"
-            style={{ filter: 'brightness(2.0) contrast(1.2) saturate(1.1)' }}
+            className="w-full h-full object-cover opacity-85"
+            style={{ 
+              filter: 'brightness(0.7) contrast(1.2) saturate(0.8) hue-rotate(10deg) blur(1px)',
+              transform: 'scale(1.1)'
+            }}
           >
             <source src="/videos/tysan-background.webm" type="video/webm" />
             <source src="/videos/tysan-background.mp4" type="video/mp4" />
             {/* Fallback: Animated gradient background */}
             <div className="w-full h-full bg-gradient-to-br from-gray-900 via-black to-gray-800 animate-pulse" />
           </video>
-          <div className="absolute inset-0 bg-transparent" />
+          
+          {/* Capa para cubrir rayas y artefactos */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+          
+          {/* Filtro principal */}
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px]" />
+          
+          {/* Overlay adicional para el lado izquierdo */}
+          <div className="absolute left-0 top-0 w-1/4 h-full bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
         </div>
       )}
 
@@ -664,43 +708,17 @@ const App = () => {
         <motion.header
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 2, duration: 0.8 }}
-          className={`fixed top-0 left-0 right-0 z-40 backdrop-blur-md border-b transition-colors duration-500 ${
-            isDarkMode 
-              ? 'bg-black/80 border-france-blue/30' 
-              : 'bg-white/90 border-gray-300'
-          }`}
+          transition={{ delay: 1, duration: 0.4 }}
+          className="fixed top-0 left-0 right-0 z-30 transition-colors duration-500 bg-black/10 backdrop-blur-sm"
         >
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex items-center h-16 space-x-8">
-              {/* Dark/Light Mode Toggle - Left side */}
-              <motion.button
-                whileTap={{ scale: 0.95 }}
-                onClick={() => setIsDarkMode(!isDarkMode)}
-                className={`p-1.5 transition-all duration-300 rounded-full ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white hover:bg-white/10' 
-                    : 'text-black/80 hover:text-black hover:bg-black/10'
-                }`}
-                title={isDarkMode ? "Modo claro" : "Modo oscuro"}
-              >
-                {isDarkMode ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/>
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
-                  </svg>
-                )}
-              </motion.button>
+
 
               {/* Logo */}
               <motion.div
                 whileHover={{ scale: 1.05 }}
-                className={`text-2xl font-bold tracking-wider transition-colors duration-500 ${
-                  isDarkMode ? 'text-white' : 'text-black'
-                }`}
+                className="text-3xl font-bold tracking-wider transition-colors duration-500 text-white"
               >
                 TYSAN
               </motion.div>
@@ -712,10 +730,10 @@ const App = () => {
                     key={section.id}
                     onClick={() => scrollToSection(index)}
                     whileHover={{ y: -2 }}
-                    className={`text-sm font-medium transition-colors duration-300 ${
+                    className={`text-base font-medium transition-colors duration-300 ${
                       currentSection === index 
-                        ? (isDarkMode ? 'text-white' : 'text-black')
-                        : (isDarkMode ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black')
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-white'
                     }`}
                   >
                     {section.title}
@@ -728,11 +746,7 @@ const App = () => {
                 <motion.button
                   whileTap={{ scale: 0.95 }}
                   onClick={() => setShowFontTester(!showFontTester)}
-                  className={`p-2 transition-colors ${
-                    isDarkMode 
-                      ? 'text-white hover:text-gray-300' 
-                      : 'text-black hover:text-gray-700'
-                  }`}
+                  className="p-2 transition-colors text-white hover:text-gray-300"
                   title="Cambiar tipografía (Admin)"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
@@ -747,14 +761,12 @@ const App = () => {
               <motion.button
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className={`md:hidden p-2 ml-auto transition-colors ${
-                  isDarkMode ? 'text-white' : 'text-black'
-                }`}
+                className="md:hidden p-2 ml-auto transition-colors text-white"
               >
                 <div className="w-6 h-6 flex flex-col justify-center items-center">
-                  <span className={`block w-5 h-0.5 transition-all duration-300 ${isDarkMode ? 'bg-white' : 'bg-black'} ${isMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
-                  <span className={`block w-5 h-0.5 transition-all duration-300 ${isDarkMode ? 'bg-white' : 'bg-black'} mt-1 ${isMenuOpen ? 'opacity-0' : ''}`} />
-                  <span className={`block w-5 h-0.5 transition-all duration-300 ${isDarkMode ? 'bg-white' : 'bg-black'} mt-1 ${isMenuOpen ? '-rotate-45 -translate-y-1' : ''}`} />
+                  <span className={`block w-5 h-0.5 transition-all duration-300 bg-white ${isMenuOpen ? 'rotate-45 translate-y-1' : ''}`} />
+                  <span className={`block w-5 h-0.5 transition-all duration-300 bg-white mt-1 ${isMenuOpen ? 'opacity-0' : ''}`} />
+                  <span className={`block w-5 h-0.5 transition-all duration-300 bg-white mt-1 ${isMenuOpen ? '-rotate-45 -translate-y-1' : ''}`} />
                 </div>
               </motion.button>
             </div>
@@ -772,11 +784,7 @@ const App = () => {
             height: isMenuOpen ? 'auto' : 0
           }}
           transition={{ duration: 0.3 }}
-          className={`md:hidden fixed top-16 left-0 right-0 z-50 backdrop-blur-md border-b overflow-hidden transition-colors duration-500 ${
-            isDarkMode 
-              ? 'bg-black/95 border-white/10' 
-              : 'bg-white/95 border-gray-200'
-          }`}
+          className="md:hidden fixed top-16 left-0 right-0 z-50 backdrop-blur-md border-b overflow-hidden transition-colors duration-500 bg-black/95 border-white/10"
         >
           <div className="px-4 py-4 space-y-2">
             {sections.map((section, index) => (
@@ -789,8 +797,8 @@ const App = () => {
                 whileHover={{ x: 10 }}
                 className={`block w-full text-left py-3 px-4 text-sm font-medium transition-colors duration-300 ${
                   currentSection === index 
-                    ? (isDarkMode ? 'text-white bg-white/10' : 'text-black bg-black/10')
-                    : (isDarkMode ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-black hover:bg-black/5')
+                    ? 'text-white bg-white/10'
+                    : 'text-gray-400 hover:text-white hover:bg-white/5'
                 }`}
               >
                 {section.title}
@@ -800,6 +808,12 @@ const App = () => {
         </motion.div>
       )}
 
+      {/* Global Background Filter - Behind content but above video */}
+      <motion.div
+        style={{ y: currentSection % 2 === 0 ? y1 : y2 }}
+        className="fixed inset-0 bg-black/5 backdrop-blur-sm z-5"
+      />
+      
       {/* Content Sections - Fullpage on all devices */}
       <div className="relative z-10 h-screen overflow-hidden">
         <AnimatePresence mode="wait">
@@ -810,13 +824,8 @@ const App = () => {
             animate="animate"
             exit="exit"
             ref={el => sectionRefs.current[currentSection] = el}
-            className="min-h-screen md:h-screen w-full flex items-center justify-center px-4 pt-32 md:pt-40 pb-20 relative overflow-hidden"
+            className="min-h-screen w-full flex items-center justify-center px-4 py-8 relative overflow-hidden"
           >
-            {/* Section Background */}
-          <motion.div
-              style={{ y: currentSection % 2 === 0 ? y1 : y2 }}
-              className="absolute inset-0 bg-black/60 backdrop-blur-sm z-10"
-          />
             
             {/* Dynamic Background Pattern - Estilo Industrial */}
           <div 
@@ -829,22 +838,22 @@ const App = () => {
               }}
             />
             
-            <div className="max-w-6xl mx-auto text-center z-50 px-4">
+            <div className="max-w-6xl mx-auto text-center z-50 px-4 flex flex-col items-center justify-center min-h-screen">
             <motion.h2
-                variants={getCachedTitleVariants(currentSection)}
+                variants={getTitleVariants(currentSection)}
                 initial="initial"
                 animate="animate"
-                className="text-4xl md:text-6xl lg:text-8xl font-black mb-6 tracking-tight text-white drop-shadow-2xl"
+                className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black mb-6 md:mb-8 tracking-tight text-white drop-shadow-2xl"
                 style={{ letterSpacing: '-0.02em' }}
               >
                 {sections[currentSection].title}
             </motion.h2>
             
             <motion.p
-                variants={getCachedSubtitleVariants(currentSection)}
+                variants={getSubtitleVariants(currentSection)}
                 initial="initial"
                 animate="animate"
-                className="text-lg md:text-xl mb-16 max-w-3xl mx-auto leading-relaxed font-semibold text-white drop-shadow-lg"
+                className="text-lg sm:text-xl md:text-2xl mb-8 md:mb-10 max-w-4xl mx-auto leading-relaxed font-semibold text-white/90 drop-shadow-lg px-4"
               >
                 {sections[currentSection].subtitle}
             </motion.p>
@@ -853,49 +862,44 @@ const App = () => {
             
               {/* Dynamic Content Based on Section */}
               {sections[currentSection].content === 'behind-scenes' && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto px-4">
                   {[1, 2, 3].map((item, index) => (
-                <motion.div
-                  key={item}
+                    <motion.div
+                      key={item}
                       custom={index}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
-                  whileHover={{ y: -4, scale: 1.01 }}
+                      whileHover={{ y: -4, scale: 1.01 }}
                       className="bg-black/40 backdrop-blur-sm rounded-none border border-white/20 
-                                hover:border-white/40 transition-all duration-300 cursor-pointer group overflow-hidden"
-                >
+                                hover:border-white/40 transition-all duration-300 cursor-pointer group overflow-hidden text-center"
+                    >
                       <div className="h-48 bg-gradient-to-br from-gray-900 to-black relative overflow-hidden">
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                           <div className="w-12 h-12 bg-white/20 rounded-none flex items-center justify-center backdrop-blur-sm">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z"/>
-                        </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                        <h3 className="text-lg font-bold text-white mb-2">Sesión #{item}</h3>
-                        <p className="text-gray-300 font-light text-sm">
-                      Capturando la energía cruda de las sesiones de estudio donde nacen las melodías.
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+                      <div className="p-6 text-center">
+                        <h3 className="text-xl font-bold text-white mb-3">Sesión #{item}</h3>
+                        <p className="text-gray-300 font-light text-base">
+                          Capturando la energía cruda de las sesiones de estudio donde nacen las melodías.
+                        </p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
               )}
 
                             {sections[currentSection].content === 'music' && (
-                <div className="relative max-w-4xl mx-auto px-4">
-                  {/* Background Effects - Más sutiles */}
-                  <div className="absolute inset-0 -z-10">
-                    <div className="absolute top-1/3 left-1/4 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-pink-500/10 rounded-full blur-3xl animate-pulse"></div>
-                    <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
-                  </div>
+                <div className="relative max-w-5xl mx-auto px-4">
                   
                   {/* Tracks Grid - Alineado con otras secciones */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-6 lg:gap-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                     {spotifyLoading ? (
                       // Loading skeleton
                       Array.from({ length: 4 }).map((_, index) => (
@@ -926,7 +930,7 @@ const App = () => {
                       <motion.div
                         key={track.id}
                         custom={index}
-                        variants={getCachedContentVariants(currentSection)}
+                        variants={getContentVariants(currentSection)}
                         initial="initial"
                         animate="animate"
                         whileHover={{ 
@@ -935,24 +939,20 @@ const App = () => {
                           rotateY: 2,
                           transition: { duration: 0.4, ease: "easeOut" }
                         }}
-                        className={`relative group cursor-pointer overflow-hidden rounded-2xl bg-gradient-to-br ${track.gradient} backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 shadow-lg hover:shadow-2xl`}
+                        className={`relative group cursor-pointer overflow-hidden rounded-xl sm:rounded-2xl bg-gradient-to-br ${getTrackGradient(track)} backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 shadow-lg hover:shadow-2xl`}
                       >
                         {/* Glassmorphism Card */}
-                        <div className="relative p-4 sm:p-5 h-full">
+                        <div className="relative p-3 sm:p-4 md:p-5 h-full">
                           {/* Cover Art with Hover Effects */}
-                          <div className="relative mb-4 sm:mb-5">
+                                                      <div className="relative mb-3 sm:mb-4 md:mb-5">
                             <motion.div
                               whileHover={{ scale: 1.05, rotate: 1 }}
                               className="w-full aspect-square rounded-xl overflow-hidden bg-gradient-to-br from-gray-900 to-black relative group/cover"
                             >
-                              <img 
+                              <LazyImage 
                                 src={track.cover} 
                                 alt={`${track.title} cover`}
-                                className="w-full h-full object-cover transition-transform duration-700 group-hover/cover:scale-110"
-                                onError={(e) => {
-                                  e.target.style.display = 'none';
-                                  e.target.nextSibling.style.display = 'flex';
-                                }}
+                                className="w-full h-full transition-transform duration-700 group-hover/cover:scale-110"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover/cover:opacity-100 transition-opacity duration-500" />
                               
@@ -979,13 +979,12 @@ const App = () => {
                           </div>
 
                           {/* Track Info - Más compacto */}
-                          <div className="space-y-2 sm:space-y-3">
-                            <h3 className="text-lg sm:text-xl font-bold text-white group-hover:text-white/90 transition-colors duration-300">
+                          <div className="space-y-3 sm:space-y-4 text-center">
+                            <h3 className="text-xl sm:text-2xl font-bold text-white group-hover:text-white/90 transition-colors duration-300">
                               {track.title}
                             </h3>
                             <div className="flex items-center justify-between text-xs sm:text-sm">
-                              <span className="text-gray-300 font-medium">{track.duration}</span>
-                              <span className="text-white/70 font-medium">{track.streams.toLocaleString()} streams</span>
+                              {/* Duración eliminada */}
                             </div>
                             
 
@@ -1066,11 +1065,11 @@ const App = () => {
               )}
 
               {sections[currentSection].content === 'upcoming' && (
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-5xl mx-auto px-4">
                   {isLoading ? (
                     <motion.div
                       custom={0}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
                       className="flex items-center justify-center"
@@ -1080,36 +1079,35 @@ const App = () => {
                   ) : upcomingRelease ? (
           <motion.div
                       custom={0}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
-                      className="bg-black/60 backdrop-blur-sm rounded-none p-8 border border-white/20"
+                      className="bg-black/60 backdrop-blur-sm rounded-none p-8 border border-white/20 text-center"
                     >
-                      <div className="flex flex-col md:flex-row items-center gap-8">
+                      <div className="flex flex-col md:flex-row items-center justify-center gap-8">
                         <div className="relative">
-                          <img 
+                          <LazyImage 
                             src={upcomingRelease.albumArt} 
                             alt={upcomingRelease.title}
-                            className="w-48 h-48 object-cover shadow-2xl"
-                            loading="lazy"
+                            className="w-48 h-48 shadow-2xl"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         </div>
-                        <div className="flex-1 text-left">
-                          <div className="text-3xl font-bold text-white mb-2">
+                        <div className="flex-1 text-center">
+                          <div className="text-4xl font-bold text-white mb-3">
                             {new Date(upcomingRelease.releaseDate).toLocaleDateString('es-ES', {
                               day: 'numeric',
                               month: 'short',
                               year: 'numeric'
                             }).toUpperCase()}
                           </div>
-                          <h3 className="text-2xl font-black text-white mb-4 text-center">{upcomingRelease.title}</h3>
-                          <p className="text-xl text-gray-300 mb-6 font-light">{upcomingRelease.description}</p>
+                          <h3 className="text-lg font-black text-white mb-6">{upcomingRelease.title}</h3>
+                          <p className="text-2xl text-gray-300 mb-8 font-light">{upcomingRelease.description}</p>
                           
                           {/* Music Player - Estilo Industrial */}
-                          <div className="bg-black/40 rounded-none p-4 border border-white/20">
-                            <div className="flex items-center justify-between mb-4">
-                              <div>
+                          <div className="bg-black/40 rounded-none p-4 border border-white/20 text-center">
+                            <div className="flex items-center justify-center mb-4">
+                              <div className="text-center">
                                 <div className="text-white font-bold">Preview</div>
                                 <div className="text-gray-400 text-sm font-light">30 segundos</div>
                               </div>
@@ -1154,22 +1152,22 @@ const App = () => {
 
 
               {sections[currentSection].content === 'shows' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto px-4">
                   {[1, 2].map((item, index) => (
                                         <motion.div
                       key={item}
                       custom={index}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
                       whileHover={{ scale: 1.02, y: -4 }}
                       className="bg-black/60 backdrop-blur-sm rounded-none p-8 border border-white/20 
-                                transition-all duration-300 cursor-pointer group"
+                                transition-all duration-300 cursor-pointer group text-center"
                     >
                   <div className="text-center">
-                        <div className="text-3xl md:text-4xl font-black text-white mb-4">15 FEB, 2025</div>
-                        <h3 className="text-2xl font-bold text-white mb-3">Show #{item}</h3>
-                        <p className="text-gray-300 mb-6 font-light">
+                        <div className="text-4xl md:text-5xl font-black text-white mb-6">15 FEB, 2025</div>
+                        <h3 className="text-3xl font-bold text-white mb-4">Show #{item}</h3>
+                        <p className="text-xl text-gray-300 mb-8 font-light">
                           Una noche de jazz detroit en su máxima expresión.
                     </p>
                     <div className="flex flex-wrap justify-center gap-4">
@@ -1188,11 +1186,11 @@ const App = () => {
 
 
               {sections[currentSection].content === 'support' && (
-                <div className="max-w-4xl mx-auto">
+                <div className="max-w-5xl mx-auto px-4">
                   <div className="flex flex-col sm:flex-row justify-center gap-6 max-w-lg mx-auto mb-8">
                     <motion.a
                       custom={0}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
                       whileHover={{ scale: 1.02, y: -2 }}
@@ -1200,9 +1198,9 @@ const App = () => {
                       href="https://www.paypal.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-4 px-8 
+                      className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-3 px-6 md:py-4 md:px-8 
                                 transition-all duration-300 text-center shadow-lg rounded-lg
-                                border border-blue-400 hover:from-blue-600 hover:to-blue-700 flex items-center justify-center gap-3"
+                                border border-blue-400 hover:from-blue-600 hover:to-blue-700 flex items-center justify-center gap-2 md:gap-3 text-sm md:text-base"
                     >
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M20.067 8.478c.492.315.844.825.844 1.478 0 .653-.352 1.163-.844 1.478-.492.315-1.163.478-1.844.478H16.5v-2.956h1.723c.681 0 1.352.163 1.844.478zM7.5 12.5c0-.653.352-1.163.844-1.478.492-.315 1.163-.478 1.844-.478H12v2.956H10.188c-.681 0-1.352-.163-1.844-.478C7.852 13.663 7.5 13.153 7.5 12.5zM24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zM12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2z"/>
@@ -1211,7 +1209,7 @@ const App = () => {
                     </motion.a>
                     <motion.a
                       custom={1}
-                      variants={getCachedContentVariants(currentSection)}
+                      variants={getContentVariants(currentSection)}
                       initial="initial"
                       animate="animate"
                       whileHover={{ scale: 1.02, y: -2 }}
@@ -1219,9 +1217,9 @@ const App = () => {
                       href="https://www.mercadopago.com"
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold py-4 px-8 
+                      className="bg-gradient-to-r from-blue-400 to-blue-500 text-white font-bold py-3 px-6 md:py-4 md:px-8 
                                 transition-all duration-300 text-center shadow-lg rounded-lg
-                                border border-blue-300 hover:from-blue-500 hover:to-blue-600 flex items-center justify-center gap-3"
+                                border border-blue-300 hover:from-blue-500 hover:to-blue-600 flex items-center justify-center gap-2 md:gap-3 text-sm md:text-base"
                     >
                       <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 22C6.486 22 2 17.514 2 12S6.486 2 12 2s10 4.486 10 10-4.486 10-10 10zm-1-7H9v2h2v-2zm0-8H9v6h2V7z"/>
@@ -1232,10 +1230,10 @@ const App = () => {
             
             <motion.div
                     custom={2}
-                    variants={getCachedContentVariants(currentSection)}
+                    variants={getContentVariants(currentSection)}
                     initial="initial"
                     animate="animate"
-                    className="text-gray-400 text-sm max-w-md mx-auto font-light text-center"
+                    className="text-white/80 text-lg max-w-2xl mx-auto font-medium text-center"
             >
               Tu apoyo hace posible la creación de arte auténtico y experiencias musicales únicas. 
               Cada contribución nos acerca a nuevos proyectos y colaboraciones.
@@ -1254,27 +1252,24 @@ const App = () => {
         <FontTester onFontChange={handleFontChange} />
       )}
 
+      {/* Cache Manager - Admin Only */}
+      {isUnlocked && (
+        <CacheManager isAdmin={isAdmin} userEmail={email} />
+      )}
+
       {/* Footer - Liminal Records */}
       {isUnlocked && (
         <motion.footer
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 0.6 }}
-          className={`fixed bottom-0 left-0 right-0 z-30 transition-colors duration-500 ${
-            isDarkMode ? 'bg-black/60' : 'bg-white/60'
-          } backdrop-blur-md border-t ${
-            isDarkMode ? 'border-white/10' : 'border-black/10'
-          }`}
+          className="fixed bottom-0 left-0 right-0 z-30 transition-colors duration-500 bg-black/60 backdrop-blur-md border-t border-white/10 px-2 sm:px-4"
         >
           <div className="px-4 py-3 text-center">
-            <p className={`text-sm font-medium transition-colors duration-500 ${
-              isDarkMode ? 'text-gray-400' : 'text-gray-600'
-            }`}>
+            <p className="text-sm font-medium transition-colors duration-500 text-gray-400">
               © 2025 <span className="font-bold">LIMINAL RECORDS</span>
             </p>
-            <p className={`text-xs font-light mt-1 transition-colors duration-500 ${
-              isDarkMode ? 'text-gray-500' : 'text-gray-500'
-            }`}>
+            <p className="text-sm font-medium mt-1 transition-colors duration-500 text-white/90">
               Patagonia Argentina
             </p>
           </div>
@@ -1308,23 +1303,19 @@ const App = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-black p-10 max-w-md w-full border border-white/20"
+            className="bg-black p-6 sm:p-8 md:p-10 max-w-md w-full border border-white/20 mx-4"
           >
             <div className="text-center mb-8">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                className="inline-block mb-6 p-4 bg-yellow-400 rounded-none"
-              >
+              <div className="inline-block mb-6">
                 <span className="text-4xl">🏆</span>
-              </motion.div>
-              <h1 className="text-4xl font-black text-white mb-4 tracking-wider">
+              </div>
+              <h1 className="text-4xl sm:text-5xl font-black text-white mb-6 tracking-wider">
                 TYSAN
               </h1>
-              <p className="text-gray-300 mb-4 font-light">
+              <p className="text-gray-300 mb-6 font-light text-lg">
                 Desbloquea la música
               </p>
-              <p className="text-gray-400 text-sm font-light">
+              <p className="text-gray-400 text-base font-light">
                 Ingresa tu correo para acceder a contenido exclusivo y mantenerte actualizado
               </p>
             </div>
@@ -1373,7 +1364,7 @@ const App = () => {
               </motion.button>
             </form>
             
-            <p className="text-gray-400 text-sm mt-8 text-center max-w-xs mx-auto font-light">
+            <p className="text-gray-400 text-base mt-8 text-center max-w-md mx-auto font-light">
               Tu correo está seguro con nosotros. Solo enviaremos actualizaciones musicales y contenido exclusivo.
             </p>
           </motion.div>
