@@ -1,7 +1,7 @@
-// Service Worker para TYSAN Landing Page - Versión simplificada
-const CACHE_NAME = 'tysan-cache-v4'; // Incrementar versión
-const STATIC_CACHE = 'tysan-static-v4';
-const DYNAMIC_CACHE = 'tysan-dynamic-v4';
+// Service Worker para TYSAN Landing Page - Versión optimizada para usuarios nuevos
+const CACHE_NAME = 'tysan-cache-v5'; // Incrementar versión para forzar actualización
+const STATIC_CACHE = 'tysan-static-v5';
+const DYNAMIC_CACHE = 'tysan-dynamic-v5';
 
 // Archivos que siempre deben estar en caché
 const STATIC_ASSETS = [
@@ -52,7 +52,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - estrategia simple
+// Fetch event - estrategia optimizada para usuarios nuevos
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -62,12 +62,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Estrategia simple: network first, fallback to cache
+  // Estrategia optimizada: network first con cache inteligente
   event.respondWith(
     fetch(request)
       .then((response) => {
-        // Cachear respuestas exitosas
-        if (response.status === 200) {
+        // Cachear respuestas exitosas (solo para recursos importantes)
+        if (response.status === 200 && (
+          url.pathname.includes('.css') ||
+          url.pathname.includes('.js') ||
+          url.pathname.includes('.png') ||
+          url.pathname.includes('.jpg') ||
+          url.pathname.includes('.webp') ||
+          url.pathname.includes('.mp4') ||
+          url.pathname.includes('.webm') ||
+          url.pathname === '/'
+        )) {
           const responseClone = response.clone();
           caches.open(DYNAMIC_CACHE).then((cache) => {
             cache.put(request, responseClone);
@@ -77,7 +86,17 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(() => {
         // Fallback a cache si no hay red
-        return caches.match(request);
+        return caches.match(request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Si no hay cache, devolver una respuesta básica
+          if (url.pathname === '/') {
+            return new Response('<!DOCTYPE html><html><head><title>TYSAN</title></head><body><h1>Cargando...</h1></body></html>', {
+              headers: { 'Content-Type': 'text/html' }
+            });
+          }
+        });
       })
   );
 });

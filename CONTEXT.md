@@ -1,23 +1,60 @@
 # CONTEXTO - TYSAN Landing Page
 
 ## ÚLTIMA ACTUALIZACIÓN
-**Fecha**: Diciembre 2024
-**Versión**: 1.0.3
-**Estado**: Todo centrado y consistente visualmente
+**Fecha**: Enero 2025
+**Versión**: 1.0.4
+**Estado**: Títulos minúsculas, DM Sans, video sin rayas, cache optimizado
 
 ## LO QUE SE HIZO ÚLTIMAMENTE
 
-### 🔧 PROBLEMAS DE CACHÉ - RESUELTOS
+### 🔤 TÍTULOS EN MINÚSCULAS
+- **Problema**: Títulos del menú en mayúsculas
+- **Solución**: Cambiados todos a minúsculas
+  - "DETRÁS DE CÁMARAS" → "detrás de cámaras"
+  - "MÚSICA" → "música"
+  - "PRÓXIMO LANZAMIENTO" → "próximo lanzamiento"
+  - "SHOWS EN VIVO" → "shows en vivo"
+  - "APOYA EL ARTE" → "apoya el arte"
+
+### 🔤 DM SANS COMO FUENTE PRINCIPAL
+- **Problema**: Fuente Inter como principal
+- **Solución**: Cambiada a DM Sans
+  - Aplicada en `src/index.css` body font-family
+  - Mantenida compatibilidad con fallbacks
+  - Mejor legibilidad y estética
+
+### 🎬 FILTRO DE VIDEO MEJORADO (RAYAS ELIMINADAS)
+- **Problema**: Rayas visibles en el lado izquierdo del video
+- **Solución**: Filtro más agresivo y overlays mejorados
+  - Filtro: `brightness(0.6) contrast(1.3) saturate(0.7) hue-rotate(15deg) blur(2px)`
+  - Opacidad reducida a 80%
+  - Scale aumentado a 1.15
+  - Múltiples overlays:
+    - Capa principal: `bg-black/50 backdrop-blur-[4px]`
+    - Gradiente izquierdo más agresivo: `w-1/3 from-black/80`
+    - Gradiente derecho: `w-1/4 from-black/60`
+    - Overlays superior e inferior
+
+### 🚀 CACHE OPTIMIZADO PARA USUARIOS NUEVOS
+- **Problema**: Cache no funcionaba bien para usuarios nuevos
+- **Solución**: Service Worker v5 con estrategia optimizada
+  - Versión actualizada a v5 para forzar actualización
+  - Estrategia "network first" con cache inteligente
+  - Solo cachea recursos importantes (.css, .js, .png, .mp4, etc.)
+  - Fallback mejorado para usuarios sin cache
+  - APP_VERSION actualizada a 1.0.4
+
+### 🔧 PROBLEMAS DE CACHÉ - RESUELTOS (ANTERIOR)
 - **Problema**: La página siempre mostraba lo mismo, no se actualizaba
 - **Causa**: Service Worker agresivo + localStorage persistente + sin versionado
 - **Solución**: Sistema completo de gestión de caché implementado
 
-### ❌ PROBLEMA NUEVO - BUCLES INFINITOS
+### ❌ PROBLEMA NUEVO - BUCLES INFINITOS (ANTERIOR)
 - **Problema**: La página se reiniciaba constantemente, no abría
 - **Causa**: Service Worker con lógica de actualización automática problemática
 - **Solución**: Simplificado Service Worker y removido auto-update
 
-### 🎯 CACHEMANAGER OPTIMIZADO
+### 🎯 CACHEMANAGER OPTIMIZADO (ANTERIOR)
 - **Problema**: CacheManager muy grande y visible para todos
 - **Solución**: 
   - Solo visible para emails específicos: juanisaito@gmail.com, saitoneprod@gmail.com, liminal@gmail.com
@@ -25,7 +62,7 @@
   - Tamaño reducido y más discreto
   - localStorage restaurado para recordar emails ingresados
 
-### 📏 TODO MÁS GRANDE
+### 📏 TODO MÁS GRANDE (ANTERIOR)
 - **Problema**: La información se veía muy pequeña
 - **Solución**:
   - Títulos: de 3xl-6xl a 4xl-7xl
@@ -35,28 +72,7 @@
   - Contenido: todos los textos aumentados de tamaño
   - Espaciado: márgenes y padding aumentados
 
-### 🎨 FILTRO DE VIDEO MEJORADO
-- **Problema**: Video de fondo muy claro y poco cool
-- **Solución**: Filtro inspirado en Enlighted/Bullbenny/Kabrakuervo
-  - brightness(0.8) - más oscuro
-  - contrast(1.1) - contraste sutil
-  - saturate(0.9) - menos saturado
-  - hue-rotate(5deg) - tono sutil
-  - blur(0.5px) - desenfoque mínimo
-  - scale(1.05) - zoom sutil
-  - backdrop-blur-[2px] - efecto glassmorphism
-
-### 🚫 RAYAS DEL VIDEO - ARREGLADAS
-- **Problema**: Rayas visibles en el lado izquierdo del video de fondo
-- **Solución**: 
-  - Filtro más agresivo: brightness(0.7), contrast(1.2), saturate(0.8)
-  - Más blur: blur(1px) y backdrop-blur-[3px]
-  - Capa adicional para cubrir artefactos
-  - Overlay específico para el lado izquierdo
-  - overflow-hidden para evitar desbordamiento
-  - Zoom aumentado: scale(1.1)
-
-### 🎯 TODO CENTRADO Y CONSISTENTE
+### 🎯 TODO CENTRADO Y CONSISTENTE (ANTERIOR)
 - **Problema**: Información no centrada y inconsistente entre secciones
 - **Solución**:
   - Todas las secciones con `max-w-5xl mx-auto px-4`
@@ -67,17 +83,18 @@
   - Consistencia visual entre todas las secciones
 
 ### 📁 ARCHIVOS CREADOS/MODIFICADOS
-1. `public/sw.js` - Service Worker simplificado (versión v4)
-2. `src/config.js` - Sistema de versiones (1.0.3)
-3. `src/components/CacheManager.js` - Panel de control optimizado para admins específicos
-4. `scripts/clear-cache.js` - Script de limpieza automática
-5. `src/index.css` - CSS optimizado
-6. `src/components/LazyImage.js` - Componente optimizado
-7. `public/_headers` - Headers de servidor
-8. `webpack.config.js` - Configuración optimizada
-9. `package.json` - Scripts nuevos agregados
-10. `src/index.js` - Lógica de auto-update removida
-11. `src/App.js` - localStorage restaurado, CacheManager con email específico, TODO MÁS GRANDE, filtro de video mejorado, rayas arregladas, TODO CENTRADO
+1. `src/App.js` - Títulos minúsculas, filtro de video mejorado
+2. `src/index.css` - DM Sans como fuente principal
+3. `public/sw.js` - Service Worker v5, estrategia optimizada
+4. `src/config.js` - APP_VERSION 1.0.4
+5. `public/sw.js` - Service Worker simplificado (versión v4) (ANTERIOR)
+6. `src/components/CacheManager.js` - Panel de control optimizado para admins específicos (ANTERIOR)
+7. `scripts/clear-cache.js` - Script de limpieza automática (ANTERIOR)
+8. `src/components/LazyImage.js` - Componente optimizado (ANTERIOR)
+9. `public/_headers` - Headers de servidor (ANTERIOR)
+10. `webpack.config.js` - Configuración optimizada (ANTERIOR)
+11. `package.json` - Scripts nuevos agregados (ANTERIOR)
+12. `src/index.js` - Lógica de auto-update removida (ANTERIOR)
 
 ### 🛠️ HERRAMIENTAS DISPONIBLES
 - **Para admins específicos**: Panel de control en esquina inferior derecha
@@ -93,16 +110,22 @@
 5. ✅ Mejorar filtro de video - COMPLETADO
 6. ✅ Arreglar rayas del video - COMPLETADO
 7. ✅ Centrar todo y hacer consistente - COMPLETADO
-8. Probar que todo funcione correctamente
+8. ✅ Títulos en minúsculas - COMPLETADO
+9. ✅ DM Sans como fuente principal - COMPLETADO
+10. ✅ Cache optimizado para usuarios nuevos - COMPLETADO
+11. Probar que todo funcione correctamente en Netlify
 
 ## NOTAS IMPORTANTES
 - localStorage restaurado para recordar emails ingresados
-- Service Worker simplificado para evitar bucles
-- Versión de app: 1.0.3
+- Service Worker v5 para forzar actualización
+- Versión de app: 1.0.4
 - Cache Manager solo visible para emails específicos de admin
 - Auto-update del Service Worker deshabilitado temporalmente
 - CacheManager más pequeño y discreto en esquina inferior derecha
 - TODO EL TEXTO MÁS GRANDE
 - Filtro de video más cool y sutil
 - Rayas del video eliminadas con capas adicionales
-- TODO CENTRADO Y CONSISTENTE VISUALMENTE 
+- TODO CENTRADO Y CONSISTENTE VISUALMENTE
+- TÍTULOS EN MINÚSCULAS
+- DM SANS COMO FUENTE PRINCIPAL
+- CACHE OPTIMIZADO PARA USUARIOS NUEVOS 

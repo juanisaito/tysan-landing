@@ -48,31 +48,31 @@ const App = () => {
   const sections = useMemo(() => [
     {
       id: 'behind-scenes',
-      title: 'DETRÁS DE CÁMARAS',
+      title: 'detrás de cámaras',
       subtitle: 'Explora el proceso creativo y los momentos íntimos que dan vida a cada canción.',
       content: 'behind-scenes'
     },
     {
       id: 'music',
-      title: 'MÚSICA',
+      title: 'música',
                       subtitle: 'Últimos lanzamientos que trascienden fronteras. Escucha y descubre el universo sonoro de Tysan.',
       content: 'music'
     },
     {
       id: 'upcoming',
-      title: 'PRÓXIMO LANZAMIENTO',
+      title: 'próximo lanzamiento',
       subtitle: 'Sé el primero en escuchar. Nuevas canciones y experiencias musicales únicas.',
       content: 'upcoming'
     },
     {
       id: 'shows',
-      title: 'SHOWS EN VIVO',
+      title: 'shows en vivo',
       subtitle: 'Experiencias únicas donde la música cobra vida. Próximas fechas.',
       content: 'shows'
     },
     {
       id: 'support',
-      title: 'APOYA EL ARTE',
+      title: 'apoya el arte',
       subtitle: 'Ayuda a mantener vivo el proceso creativo. Tu contribución apoya directamente la producción.',
       content: 'support'
     },
@@ -680,10 +680,10 @@ const App = () => {
             muted
             playsInline
             preload="metadata"
-            className="w-full h-full object-cover opacity-85"
+            className="w-full h-full object-cover opacity-80"
             style={{ 
-              filter: 'brightness(0.7) contrast(1.2) saturate(0.8) hue-rotate(10deg) blur(1px)',
-              transform: 'scale(1.1)'
+              filter: 'brightness(0.6) contrast(1.3) saturate(0.7) hue-rotate(15deg) blur(2px)',
+              transform: 'scale(1.15)'
             }}
           >
             <source src="/videos/tysan-background.webm" type="video/webm" />
@@ -692,14 +692,18 @@ const App = () => {
             <div className="w-full h-full bg-gradient-to-br from-gray-900 via-black to-gray-800 animate-pulse" />
           </video>
           
-          {/* Capa para cubrir rayas y artefactos */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent" />
+          {/* Capa principal para cubrir rayas */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-[4px]" />
           
-          {/* Filtro principal */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[3px]" />
+          {/* Gradiente lateral izquierdo más agresivo */}
+          <div className="absolute left-0 top-0 w-1/3 h-full bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
           
-          {/* Overlay adicional para el lado izquierdo */}
-          <div className="absolute left-0 top-0 w-1/4 h-full bg-gradient-to-r from-black/60 via-black/20 to-transparent" />
+          {/* Gradiente lateral derecho */}
+          <div className="absolute right-0 top-0 w-1/4 h-full bg-gradient-to-l from-black/60 via-black/20 to-transparent" />
+          
+          {/* Overlay superior e inferior */}
+          <div className="absolute top-0 left-0 w-full h-1/4 bg-gradient-to-b from-black/40 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-1/4 bg-gradient-to-t from-black/40 to-transparent" />
         </div>
       )}
 

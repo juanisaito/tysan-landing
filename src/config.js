@@ -1,5 +1,5 @@
 // Configuration file for TYSAN Landing Page
-const APP_VERSION = '1.0.3'; // Incrementar versión para forzar actualizaciones
+const APP_VERSION = '1.0.4'; // Incrementar versión para forzar actualizaciones
 
 export const config = {
   // App Version
